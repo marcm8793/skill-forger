@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**skillman** is a CLI wrapper to manage project [skills](https://github.com/vercel-labs/skills) and lock them in `skills.json`. It provides a declarative way to install skills per project, similar to how package managers work with `package.json`.
+**skill-forger** is a CLI wrapper to manage project [skills](https://github.com/vercel-labs/skills) and lock them in `skills.json`. It provides a declarative way to install skills per project, similar to how package managers work with `package.json`.
 
 ## Architecture
 
@@ -68,9 +68,9 @@ interface SkillSource {
 ## CLI Commands
 
 ```sh
-skillman                                    # Install skills (default)
-skillman install, i [--global] [--agent <name>...]  # Install skills from skills.json
-skillman add <source>... [--agent <name>...]  # Add skill source(s) to skills.json
+skill-forger                                    # Install skills (default)
+skill-forger install, i [--global] [--agent <name>...]  # Install skills from skills.json
+skill-forger add <source>... [--agent <name>...]  # Add skill source(s) to skills.json
 ```
 
 ### Source Format
@@ -78,11 +78,11 @@ skillman add <source>... [--agent <name>...]  # Add skill source(s) to skills.js
 Sources can include inline skills using colon or comma-separated syntax, or skills.sh URLs:
 
 ```sh
-skillman add vercel-labs/skills              # Add all skills from source
-skillman add owner/repo:pdf,commit           # Add specific skills inline
-skillman add org/repo-a:skill1 org/repo-b:skill2  # Multiple sources
-skillman add https://skills.sh/owner/repo/pdf     # skills.sh URL (https)
-skillman add skills.sh/owner/repo/pdf             # skills.sh URL (no protocol)
+skill-forger add vercel-labs/skills              # Add all skills from source
+skill-forger add owner/repo:pdf,commit           # Add specific skills inline
+skill-forger add org/repo-a:skill1 org/repo-b:skill2  # Multiple sources
+skill-forger add https://skills.sh/owner/repo/pdf     # skills.sh URL (https)
+skill-forger add skills.sh/owner/repo/pdf             # skills.sh URL (no protocol)
 ```
 
 ### Options
@@ -95,24 +95,26 @@ skillman add skills.sh/owner/repo/pdf             # skills.sh URL (no protocol)
 ## Development
 
 ```sh
-pnpm install    # Install dependencies
-pnpm dev        # Run tests in watch mode
-pnpm build      # Build with obuild
-pnpm test       # Full test suite with coverage
-pnpm lint       # Lint and format check
-pnpm typecheck  # TypeScript type checking
+bun install      # Install dependencies
+bun run dev      # Run tests in watch mode
+bun run build    # Build with obuild
+bun run test     # Run test suite
+bun run check    # Lint and format check
+bun run fix      # Auto-fix lint/format
+bun run typecheck # TypeScript type checking
 ```
 
 ## Code Style
 
 - ESM only (`"type": "module"`)
 - Use explicit `.ts` extensions in imports
-- Uses `obuild` for building, `oxlint`/`oxfmt` for linting/formatting
+- Uses `obuild` for building, `ultracite`/`biome` for linting/formatting
 - TypeScript strict mode enabled
+- Run `bun run fix` to auto-format/lint, `bun run check` to check issues
 
 ## Integration
 
-Skillman delegates actual skill installation to Vercel's skills CLI. It first checks for a local `skills` binary in `node_modules/.bin`, falling back to `npx skills`:
+Skill-forge delegates actual skill installation to Vercel's skills CLI. It first checks for a local `skills` binary in `node_modules/.bin`, falling back to `npx skills`:
 
 ```sh
 # Uses local binary if available, otherwise:
@@ -121,7 +123,7 @@ npx skills add <source> --skill <name> --agent <agent-name> --yes
 
 ### Automatic .gitignore
 
-During `install`, skillman automatically adds `.agents` to `.gitignore` (creating the file if needed).
+During `install`, skill-forger automatically adds `.agents` to `.gitignore` (creating the file if needed).
 
 ### Install Output
 

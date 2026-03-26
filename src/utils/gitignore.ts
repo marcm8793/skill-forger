@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
-export async function findGitignore(cwd: string = process.cwd()): Promise<string | undefined> {
+export function findGitignore(cwd: string = process.cwd()): string | undefined {
   let dir = resolve(cwd);
   const root = dirname(dir);
 
@@ -12,7 +12,9 @@ export async function findGitignore(cwd: string = process.cwd()): Promise<string
       return candidate;
     }
     const parent = dirname(dir);
-    if (parent === dir) break;
+    if (parent === dir) {
+      break;
+    }
     dir = parent;
   }
 
@@ -26,33 +28,35 @@ export async function findGitignore(cwd: string = process.cwd()): Promise<string
 }
 
 export interface AddGitignoreEntryOptions {
-  cwd?: string;
   createIfNotExists?: boolean;
+  cwd?: string;
 }
 
 export async function addGitignoreEntry(
   entries: string | string[],
-  options: AddGitignoreEntryOptions = {},
+  options: AddGitignoreEntryOptions = {}
 ): Promise<string | undefined> {
   const { cwd, createIfNotExists = true } = options;
   const resolvedCwd = resolve(cwd ?? process.cwd());
 
   // Normalize and dedupe entries
   const inputEntries = Array.isArray(entries) ? entries : [entries];
-  const uniqueEntries = [...new Set(inputEntries.map((e) => e.trim()).filter(Boolean))];
+  const uniqueEntries = [
+    ...new Set(inputEntries.map((e) => e.trim()).filter(Boolean)),
+  ];
 
   if (uniqueEntries.length === 0) {
     return undefined;
   }
 
-  let gitignorePath = await findGitignore(resolvedCwd);
+  let gitignorePath = findGitignore(resolvedCwd);
 
   if (!gitignorePath) {
     if (!createIfNotExists) {
       return undefined;
     }
     gitignorePath = join(resolvedCwd, ".gitignore");
-    await writeFile(gitignorePath, uniqueEntries.join("\n") + "\n", "utf8");
+    await writeFile(gitignorePath, `${uniqueEntries.join("\n")}\n`, "utf8");
     return gitignorePath;
   }
 
@@ -68,7 +72,7 @@ export async function addGitignoreEntry(
 
   // Append entries, ensuring there's a newline before them if file doesn't end with one
   const prefix = content.endsWith("\n") ? "" : "\n";
-  const newContent = content + prefix + newEntries.join("\n") + "\n";
+  const newContent = `${content}${prefix}${newEntries.join("\n")}\n`;
 
   await writeFile(gitignorePath, newContent, "utf8");
   return gitignorePath;

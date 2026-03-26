@@ -2,21 +2,22 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { c } from "./utils/colors.ts";
 import { readSkillsConfig } from "./config.ts";
+import { c } from "./utils/colors.ts";
 import { addGitignoreEntry } from "./utils/gitignore.ts";
 
 export interface InstallSkillsOptions {
-  cwd?: string;
   agents?: string[];
+  cwd?: string;
   global?: boolean;
   yes?: boolean;
 }
 
 let _skillsBinaryCache: string | undefined | null = null;
 
-export function findSkillsBinary(options?: { cache?: boolean }): string | undefined {
+export function findSkillsBinary(options?: {
+  cache?: boolean;
+}): string | undefined {
   const useCache = options?.cache !== false;
   if (useCache && _skillsBinaryCache !== null) {
     return _skillsBinaryCache;
@@ -31,7 +32,9 @@ export function findSkillsBinary(options?: { cache?: boolean }): string | undefi
       return candidate;
     }
     const parent = dirname(dir);
-    if (parent === dir) break;
+    if (parent === dir) {
+      break;
+    }
     dir = parent;
   }
 
@@ -39,8 +42,12 @@ export function findSkillsBinary(options?: { cache?: boolean }): string | undefi
   return undefined;
 }
 
-export async function installSkills(options: InstallSkillsOptions = {}): Promise<void> {
-  const { config, path: configPath } = await readSkillsConfig({ cwd: options.cwd });
+export async function installSkills(
+  options: InstallSkillsOptions = {}
+): Promise<void> {
+  const { config, path: configPath } = await readSkillsConfig({
+    cwd: options.cwd,
+  });
   const configDir = dirname(configPath);
 
   // Ensure .agents is in .gitignore
@@ -48,8 +55,12 @@ export async function installSkills(options: InstallSkillsOptions = {}): Promise
 
   const total = config.skills.length;
   const totalStart = performance.now();
-  const globalPrefix = options.global ? `${c.magenta}[ global ]${c.reset} ` : "";
-  console.log(`${globalPrefix}🤹 Installing ${total} skill${total === 1 ? "" : "s"}...\n`);
+  const globalPrefix = options.global
+    ? `${c.magenta}[ global ]${c.reset} `
+    : "";
+  console.log(
+    `${globalPrefix}🤹 Installing ${total} skill${total === 1 ? "" : "s"}...\n`
+  );
 
   let i = 0;
   for (const entry of config.skills) {
@@ -59,7 +70,7 @@ export async function installSkills(options: InstallSkillsOptions = {}): Promise
 
   const totalDuration = formatDuration(performance.now() - totalStart);
   console.log(
-    `${globalPrefix}🎉 Done! ${total} skill${total === 1 ? "" : "s"} installed in ${c.green}${totalDuration}${c.reset}.`,
+    `${globalPrefix}🎉 Done! ${total} skill${total === 1 ? "" : "s"} installed in ${c.green}${totalDuration}${c.reset}.`
   );
 }
 
@@ -69,22 +80,25 @@ export interface InstallSkillSourceOptions extends InstallSkillsOptions {
 
 export async function installSkillSource(
   entry: { source: string; skills?: string[] },
-  options: InstallSkillSourceOptions,
+  options: InstallSkillSourceOptions
 ): Promise<void> {
   const skillsBinary = findSkillsBinary();
-  const globalPrefix = options.global ? `${c.magenta}[ global ]${c.reset} ` : "";
+  const globalPrefix = options.global
+    ? `${c.magenta}[ global ]${c.reset} `
+    : "";
 
-  const skillList = (entry.skills?.length || 0) > 0 ? entry.skills!.join(", ") : "all skills";
+  const skillList =
+    (entry.skills?.length || 0) > 0 ? entry.skills?.join(", ") : "all skills";
   console.log(
-    `${globalPrefix}${c.cyan}◐${c.reset} ${options.prefix || ""}Installing ${c.cyan}${entry.source}${c.reset} ${c.dim}(${skillList})${c.reset}`,
+    `${globalPrefix}${c.cyan}◐${c.reset} ${options.prefix || ""}Installing ${c.cyan}${entry.source}${c.reset} ${c.dim}(${skillList})${c.reset}`
   );
 
   const [command, args] = skillsBinary
     ? [skillsBinary, ["add", entry.source]]
     : ["npx", ["skills", "add", entry.source]];
 
-  if ((entry.skills?.length || 0) > 0) {
-    args.push("--skill", ...entry.skills!);
+  if (entry.skills && entry.skills.length > 0) {
+    args.push("--skill", ...entry.skills);
   } else {
     args.push("--skill", "*");
   }
@@ -103,7 +117,7 @@ export async function installSkillSource(
 
   if (process.env.DEBUG) {
     console.log(
-      `${c.dim}$ ${[command.replace(process.cwd(), "."), ...args].join(" ")}${c.reset}\n`,
+      `${c.dim}$ ${[command.replace(process.cwd(), "."), ...args].join(" ")}${c.reset}\n`
     );
   }
 
@@ -111,16 +125,18 @@ export async function installSkillSource(
   await runCommand(command, args);
   const skillDuration = formatDuration(performance.now() - skillStart);
   console.log(
-    `${globalPrefix}${c.green}✔${c.reset} Installed ${entry.source} ${c.dim}(${skillDuration})${c.reset}\n`,
+    `${globalPrefix}${c.green}✔${c.reset} Installed ${entry.source} ${c.dim}(${skillDuration})${c.reset}\n`
   );
 }
 
 // --- Internal helpers ---
 
 function formatDuration(ms: number): string {
-  ms = Math.round(ms);
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = Math.round(ms / 1000);
+  const rounded = Math.round(ms);
+  if (rounded < 1000) {
+    return `${rounded}ms`;
+  }
+  const seconds = Math.round(rounded / 1000);
   return seconds < 60 ? `${seconds}s` : `${Math.round(seconds / 60)}m`;
 }
 
@@ -141,7 +157,10 @@ function runCommand(command: string, args: string[]): Promise<void> {
         return;
       }
 
-      const output = [Buffer.concat(stdout).toString(), Buffer.concat(stderr).toString()]
+      const output = [
+        Buffer.concat(stdout).toString(),
+        Buffer.concat(stderr).toString(),
+      ]
         .filter(Boolean)
         .join("\n");
 

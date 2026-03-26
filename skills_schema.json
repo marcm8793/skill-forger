@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unpkg.com/skill-forger/skills_schema.json",
+  "title": "Skills Config",
+  "description": "Configuration file for skill-forger - manages project skills",
+  "type": "object",
+  "required": ["skills"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "skills": {
+      "type": "array",
+      "description": "List of skill sources to install",
+      "items": {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Skill source identifier (e.g., 'vercel-labs/skills')"
+          },
+          "skills": {
+            "type": "array",
+            "description": "Specific skills to install from this source (empty array or omitted = all)",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

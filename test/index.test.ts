@@ -5,6 +5,8 @@ import { parseSource } from "../src/cli.ts";
 import { findSkillsConfig, readSkillsConfig } from "../src/config.ts";
 import { findSkillsBinary } from "../src/skills.ts";
 
+const SKILLS_BIN_RE = /node_modules[/\\]\.bin[/\\]skills$/;
+
 describe("findSkillsConfig", () => {
   const testDir = join(import.meta.dirname, ".tmp");
 
@@ -23,7 +25,10 @@ describe("findSkillsConfig", () => {
     const parent = join(testDir, "parent");
     const child = join(parent, "child");
     await mkdir(child, { recursive: true });
-    await writeFile(join(parent, "skills.json"), JSON.stringify({ skills: [] }));
+    await writeFile(
+      join(parent, "skills.json"),
+      JSON.stringify({ skills: [] })
+    );
 
     const result = await findSkillsConfig(child);
     expect(result).toBe(join(parent, "skills.json"));
@@ -45,7 +50,7 @@ describe("readSkillsConfig", () => {
     await mkdir(dir, { recursive: true });
     await writeFile(
       join(dir, "skills.json"),
-      JSON.stringify({ skills: [{ source: "test", skills: ["a"] }] }),
+      JSON.stringify({ skills: [{ source: "test", skills: ["a"] }] })
     );
 
     const { config, path } = await readSkillsConfig({ cwd: dir });
@@ -57,7 +62,9 @@ describe("readSkillsConfig", () => {
   });
 
   it("throws when skills.json not found", async () => {
-    await expect(readSkillsConfig({ cwd: "/" })).rejects.toThrow("skills.json not found");
+    await expect(readSkillsConfig({ cwd: "/" })).rejects.toThrow(
+      "skills.json not found"
+    );
   });
 });
 
@@ -65,14 +72,20 @@ describe("findSkillsBinary", () => {
   it("finds skills binary in node_modules", () => {
     const binary = findSkillsBinary({ cache: false });
     expect(binary).toBeDefined();
-    expect(binary).toMatch(/node_modules[/\\]\.bin[/\\]skills$/);
+    expect(binary).toMatch(SKILLS_BIN_RE);
   });
 });
 
 describe("parseSource", () => {
   it("parses colon-separated format", () => {
-    expect(parseSource("owner/repo")).toEqual({ source: "owner/repo", skills: [] });
-    expect(parseSource("owner/repo:pdf")).toEqual({ source: "owner/repo", skills: ["pdf"] });
+    expect(parseSource("owner/repo")).toEqual({
+      source: "owner/repo",
+      skills: [],
+    });
+    expect(parseSource("owner/repo:pdf")).toEqual({
+      source: "owner/repo",
+      skills: ["pdf"],
+    });
     expect(parseSource("owner/repo:pdf:commit")).toEqual({
       source: "owner/repo",
       skills: ["pdf", "commit"],
@@ -80,8 +93,14 @@ describe("parseSource", () => {
   });
 
   it("treats * as all skills", () => {
-    expect(parseSource("owner/repo:*")).toEqual({ source: "owner/repo", skills: [] });
-    expect(parseSource("owner/repo:pdf:*")).toEqual({ source: "owner/repo", skills: [] });
+    expect(parseSource("owner/repo:*")).toEqual({
+      source: "owner/repo",
+      skills: [],
+    });
+    expect(parseSource("owner/repo:pdf:*")).toEqual({
+      source: "owner/repo",
+      skills: [],
+    });
   });
 
   it("parses skills.sh URLs", () => {
@@ -90,7 +109,9 @@ describe("parseSource", () => {
       skills: [],
     });
     expect(
-      parseSource("https://skills.sh/vercel-labs/agent-skills/vercel-react-best-practices"),
+      parseSource(
+        "https://skills.sh/vercel-labs/agent-skills/vercel-react-best-practices"
+      )
     ).toEqual({
       source: "vercel-labs/agent-skills",
       skills: ["vercel-react-best-practices"],

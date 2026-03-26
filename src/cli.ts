@@ -1,27 +1,36 @@
 #!/usr/bin/env node
 
+import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
-
-import { c } from "./utils/colors.ts";
 import { addSkill, findSkillsConfig } from "./config.ts";
 import { installSkillSource, installSkills } from "./skills.ts";
+import { c } from "./utils/colors.ts";
 
-const name = "skillman";
-const version = "0.0.0";
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
+const name = "skill-forger";
 
-export function parseSource(input: string): { source: string; skills: string[] } {
+const SKILLS_SH_RE = /^(?:https?:\/\/)?skills\.sh\/(.+)/;
+
+export function parseSource(input: string): {
+  source: string;
+  skills: string[];
+} {
   // Handle skills.sh URLs: https://skills.sh/owner/repo/skill-name or skills.sh/owner/repo/skill-name
-  const skillsShMatch = input.match(/^(?:https?:\/\/)?skills\.sh\/(.+)/)?.[1];
+  const skillsShMatch = input.match(SKILLS_SH_RE)?.[1];
   if (skillsShMatch) {
     const [namespace, repo, ...skills] = skillsShMatch.split("/");
-    if (!namespace || !repo) {
+    if (!(namespace && repo)) {
       return { source: input, skills: [] };
     }
     const filtered = skills
       .flatMap((s) => s.split(","))
       .map((s) => s.trim())
       .filter(Boolean);
-    return { source: `${namespace}/${repo}`, skills: filtered.includes("*") ? [] : filtered };
+    return {
+      source: `${namespace}/${repo}`,
+      skills: filtered.includes("*") ? [] : filtered,
+    };
   }
 
   const [source = "", ...parts] = input.split(":");
@@ -33,7 +42,70 @@ export function parseSource(input: string): { source: string; skills: string[] }
   return { source, skills: skills.includes("*") ? [] : skills };
 }
 
-export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
+async function handleInstall(values: {
+  agent?: string[];
+  global?: boolean;
+}): Promise<void> {
+  const skillsConfigPath = findSkillsConfig();
+  if (!skillsConfigPath) {
+    console.log(`${c.yellow}No skills.json found.${c.reset}
+
+Get started by adding a skill source:
+
+${c.dim}$${c.reset} npx ${name} add ${c.cyan}vercel-labs/skills${c.reset}
+`);
+    return;
+  }
+  await installSkills({
+    yes: true,
+    agents: values.agent || ["claude-code"],
+    global: values.global,
+  });
+}
+
+async function handleAdd(
+  positionals: string[],
+  values: { agent?: string[]; global?: boolean }
+): Promise<void> {
+  const sources = positionals.slice(1);
+  if (sources.length === 0) {
+    showUsage("add");
+    throw new Error("Missing skill source.");
+  }
+
+  const parsedSources: { source: string; skills: string[] }[] = [];
+  for (const rawSource of sources) {
+    const { source, skills } = parseSource(rawSource);
+    const existing = parsedSources.find((p) => p.source === source);
+    if (existing) {
+      if (skills.length === 0 || existing.skills.length === 0) {
+        existing.skills = [];
+      } else {
+        existing.skills = [...new Set([...existing.skills, ...skills])];
+      }
+    } else {
+      parsedSources.push({ source, skills: [...skills] });
+    }
+  }
+
+  const agents = values.agent || ["claude-code"];
+  const globalPrefix = values.global ? `${c.magenta}[ global ]${c.reset} ` : "";
+
+  for (const { source, skills } of parsedSources) {
+    await installSkillSource(
+      { source, skills },
+      { agents, yes: true, global: values.global }
+    );
+    await addSkill(source, skills);
+    console.log(
+      `${globalPrefix}${c.green}✔${c.reset} Added ${c.cyan}${source}${c.reset} to skills.json`
+    );
+  }
+}
+
+export async function main(
+  argv: string[] = process.argv.slice(2)
+): Promise<void> {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -58,58 +130,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   }
 
   if (!command || command === "install" || command === "i") {
-    const skillsConfigPath = findSkillsConfig();
-    if (!skillsConfigPath) {
-      console.log(`${c.yellow}No skills.json found.${c.reset}
-
-Get started by adding a skill source:
-
-${c.dim}$${c.reset} npx ${name} add ${c.cyan}vercel-labs/skills${c.reset}
-`);
-      return;
-    }
-    await installSkills({
-      yes: true,
-      agents: values.agent || ["claude-code"],
-      global: values.global,
-    });
+    await handleInstall(values);
     return;
   }
 
   if (command === "add") {
-    const sources = positionals.slice(1);
-    if (sources.length === 0) {
-      showUsage("add");
-      throw new Error("Missing skill source.");
-    }
-
-    // Parse and deduplicate sources
-    const parsedSources: { source: string; skills: string[] }[] = [];
-    for (const rawSource of sources) {
-      const { source, skills } = parseSource(rawSource);
-      const existing = parsedSources.find((p) => p.source === source);
-      if (existing) {
-        // Merge skills (empty = all, so if either is empty, result is empty)
-        if (skills.length === 0 || existing.skills.length === 0) {
-          existing.skills = [];
-        } else {
-          existing.skills = [...new Set([...existing.skills, ...skills])];
-        }
-      } else {
-        parsedSources.push({ source, skills: [...skills] });
-      }
-    }
-
-    const agents = values.agent || ["claude-code"];
-    const globalPrefix = values.global ? `${c.magenta}[ global ]${c.reset} ` : "";
-
-    for (const { source, skills } of parsedSources) {
-      await installSkillSource({ source, skills }, { agents, yes: true, global: values.global });
-      await addSkill(source, skills);
-      console.log(
-        `${globalPrefix}${c.green}✔${c.reset} Added ${c.cyan}${source}${c.reset} to skills.json`,
-      );
-    }
+    await handleAdd(positionals, values);
     return;
   }
 
@@ -180,6 +206,8 @@ Run ${c.cyan}${name} <command> --help${c.reset} for command-specific help.
 }
 
 main().catch((error) => {
-  console.error(`${c.red}error:${c.reset} ${error instanceof Error ? error.message : error}`);
+  console.error(
+    `${c.red}error:${c.reset} ${error instanceof Error ? error.message : error}`
+  );
   process.exitCode = 1;
 });

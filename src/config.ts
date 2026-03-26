@@ -8,8 +8,8 @@ export interface SkillsConfig {
 }
 
 export interface SkillSource {
-  source: string;
   skills?: string[];
+  source: string;
 }
 
 export interface SkillsConfigResult {
@@ -17,7 +17,9 @@ export interface SkillsConfigResult {
   path: string;
 }
 
-export function findSkillsConfig(cwd: string = process.cwd()): string | undefined {
+export function findSkillsConfig(
+  cwd: string = process.cwd()
+): string | undefined {
   let dir = resolve(cwd);
   const root = dirname(dir);
 
@@ -27,7 +29,9 @@ export function findSkillsConfig(cwd: string = process.cwd()): string | undefine
       return candidate;
     }
     const parent = dirname(dir);
-    if (parent === dir) break;
+    if (parent === dir) {
+      break;
+    }
     dir = parent;
   }
 
@@ -41,8 +45,8 @@ export function findSkillsConfig(cwd: string = process.cwd()): string | undefine
 }
 
 export interface ReadSkillsConfigOptions {
-  cwd?: string;
   createIfNotExists?: boolean;
+  cwd?: string;
 }
 
 function defaultConfig(): SkillsConfig {
@@ -50,7 +54,7 @@ function defaultConfig(): SkillsConfig {
 }
 
 export async function readSkillsConfig(
-  options: ReadSkillsConfigOptions = {},
+  options: ReadSkillsConfigOptions = {}
 ): Promise<SkillsConfigResult> {
   const { cwd, createIfNotExists = false } = options;
   const skillsPath = findSkillsConfig(cwd);
@@ -62,7 +66,9 @@ export async function readSkillsConfig(
       await writeFile(newPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
       return { config, path: newPath };
     }
-    throw new Error("skills.json not found in current directory or any parent directory.");
+    throw new Error(
+      "skills.json not found in current directory or any parent directory."
+    );
   }
 
   const raw = await readFile(skillsPath, "utf8");
@@ -71,13 +77,15 @@ export async function readSkillsConfig(
 }
 
 export interface UpdateSkillsConfigOptions {
-  cwd?: string;
   createIfNotExists?: boolean;
+  cwd?: string;
 }
 
 export async function updateSkillsConfig(
-  updater: (config: SkillsConfig) => void | SkillsConfig | Promise<void | SkillsConfig>,
-  options: UpdateSkillsConfigOptions = {},
+  updater: (
+    config: SkillsConfig
+  ) => undefined | SkillsConfig | Promise<undefined | SkillsConfig>,
+  options: UpdateSkillsConfigOptions = {}
 ): Promise<SkillsConfigResult> {
   const { cwd, createIfNotExists = true } = options;
   const { config, path } = await readSkillsConfig({ cwd, createIfNotExists });
@@ -89,14 +97,14 @@ export async function updateSkillsConfig(
 }
 
 export interface AddSkillOptions {
-  cwd?: string;
   createIfNotExists?: boolean;
+  cwd?: string;
 }
 
-export async function addSkill(
+export function addSkill(
   source: string,
   skills: string[] = [],
-  options: AddSkillOptions = {},
+  options: AddSkillOptions = {}
 ): Promise<SkillsConfigResult> {
   return updateSkillsConfig((config) => {
     const entry = config.skills.find((item) => item.source === source);
@@ -129,10 +137,11 @@ function assertSkillsConfig(value: unknown): SkillsConfig {
   }
 
   if (!("$schema" in value)) {
-    value = {
-      $schema: "https://unpkg.com/skillman/skills_schema.json",
+    const result = {
+      $schema: "https://unpkg.com/skill-forger/skills_schema.json",
       ...(value as SkillsConfig),
     };
+    return result;
   }
 
   return value as SkillsConfig;

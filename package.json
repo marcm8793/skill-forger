@@ -1,11 +1,48 @@
 {
-  "name": "skillforge",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
+  "name": "skill-forger",
+  "version": "0.1.0",
+  "description": "Manage project Agent skills declaratively with skills.json",
+  "license": "MIT",
+  "author": "Marc Mansour",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcm8793/skillforge.git"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "type": "module",
+  "bin": {
+    "skill-forger": "./dist/cli.mjs",
+    "sf": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "skills_schema.json"
+  ],
+  "keywords": [
+    "skills",
+    "cli",
+    "agent-skills",
+    "ai-agents",
+    "claude-code"
+  ],
+  "scripts": {
+    "build": "obuild",
+    "dev": "vitest --watch",
+    "test": "vitest run",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "skills": "^1.4.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.7",
+    "@types/bun": "latest",
+    "jiti": "^2.6.1",
+    "obuild": "^0.4.32",
+    "typescript": "^5",
+    "ultracite": "7.3.2",
+    "vitest": "^4.1.2"
   }
 }
