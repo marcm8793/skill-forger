@@ -1,6 +1,6 @@
 {
   "name": "skill-forger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Manage project Agent skills declaratively with skills.json",
   "license": "MIT",
   "author": "Marc Mansour",
