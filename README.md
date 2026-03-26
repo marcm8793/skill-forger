@@ -32,7 +32,11 @@ npx skill-forger add anthropics/skills:skill-creator
   <img src="./assets/add.svg" alt="Install preview">
 </p>
 
-This creates a `skills.json` file:
+This creates a `skills.json` file that you commit to your repo — so your whole team shares the same skills:
+
+```sh
+git add skills.json
+```
 
 ```json
 {
@@ -118,6 +122,23 @@ npx skill-forger add https://skills.sh/vercel-labs/skills/find-skills
 
 # Install skills globally
 npx skill-forger install --global
+
+# Install for multiple agents
+npx skill-forger install --agent claude-code --agent cursor
+```
+
+### Supported Agents
+
+skill-forger passes the `--agent` flag to the underlying [skills CLI](https://github.com/vercel-labs/skills). Supported agents include:
+
+- `claude-code` (default)
+- `cursor`
+- `codex`
+- `github-copilot`
+
+```sh
+# Install for a specific agent
+npx skill-forger install --agent cursor
 
 # Install for multiple agents
 npx skill-forger install --agent claude-code --agent cursor

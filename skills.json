@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/skill-forger/skills_schema.json",
+  "skills": [
+    {
+      "source": "github/awesome-copilot",
+      "skills": ["git-commit"]
+    }
+  ]
+}
