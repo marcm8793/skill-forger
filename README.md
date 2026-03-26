@@ -2,6 +2,12 @@
 
 Manage project Agent [skills](https://skills.sh/) from `skills.json`. Uses [`skills`](https://github.com/vercel-labs/skills) CLI under the hood.
 
+The `sf` shorthand is also available:
+
+```bash
+npx sf add vercel-labs/skills
+```
+
 ## Usage
 
 **Install all skills from `skills.json`:**
@@ -130,4 +136,4 @@ npx skill-forger install --agent claude-code --agent cursor
 
 ## License
 
-Published under the [MIT](https://github.com/unjs/skill-forger/blob/main/LICENSE) license.
+Published under the [MIT](https://github.com/marcm8793/skill-forger/blob/main/LICENSE) license 🔥.

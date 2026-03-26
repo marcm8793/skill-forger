@@ -12,8 +12,7 @@ src/
 ├── config.ts           # skills.json config management
 ├── skills.ts           # Skills CLI execution
 └── utils/
-    ├── colors.ts       # ANSI color codes for terminal output
-    └── gitignore.ts    # .gitignore file management
+    └── colors.ts       # ANSI color codes for terminal output
 test/index.test.ts      # Tests using vitest
 ```
 
@@ -45,11 +44,6 @@ test/index.test.ts      # Tests using vitest
 - `c.reset`, `c.bold`, `c.dim` — formatting
 - `c.red`, `c.green`, `c.yellow`, `c.blue`, `c.magenta`, `c.cyan` — colors
 - Auto-disabled when stdout is not a TTY
-
-**gitignore.ts** — .gitignore management:
-
-- `findGitignore(cwd?)` — Finds `.gitignore` by traversing up from cwd (async)
-- `addGitignoreEntry(entries, options?)` — Adds entry/entries if not present; accepts `string | string[]` (options: `{ cwd?, createIfNotExists? }`)
 
 ### `skills.json` Schema
 
@@ -121,16 +115,12 @@ Skill-forge delegates actual skill installation to Vercel's skills CLI. It first
 npx skills add <source> --skill <name> --agent <agent-name> --yes
 ```
 
-### Automatic .gitignore
-
-During `install`, skill-forger automatically adds `.agents` to `.gitignore` (creating the file if needed).
-
 ### Install Output
 
 Installation shows colored progress with timing:
 
 ```
-🤹 Installing 2 skills...
+🛠️ Installing 2 skills...
 
 ◐ [1/2] Installing vercel-labs/skills (pdf, commit)
 ✔ Installed vercel-labs/skills (2s)
@@ -138,7 +128,7 @@ Installation shows colored progress with timing:
 ◐ [2/2] Installing anthropics/courses
 ✔ Installed anthropics/courses (1s)
 
-🎉 Done! 2 skills installed in 3s.
+🔥 Done! 2 skills installed in 3s.
 ```
 
 ## Maintaining Documentation

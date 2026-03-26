@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readSkillsConfig } from "./config.ts";
 import { c } from "./utils/colors.ts";
-import { addGitignoreEntry } from "./utils/gitignore.ts";
 
 export interface InstallSkillsOptions {
   agents?: string[];
@@ -45,21 +44,16 @@ export function findSkillsBinary(options?: {
 export async function installSkills(
   options: InstallSkillsOptions = {}
 ): Promise<void> {
-  const { config, path: configPath } = await readSkillsConfig({
+  const { config } = await readSkillsConfig({
     cwd: options.cwd,
   });
-  const configDir = dirname(configPath);
-
-  // Ensure .agents is in .gitignore
-  await addGitignoreEntry(".agents", { cwd: configDir });
-
   const total = config.skills.length;
   const totalStart = performance.now();
   const globalPrefix = options.global
     ? `${c.magenta}[ global ]${c.reset} `
     : "";
   console.log(
-    `${globalPrefix}🤹 Installing ${total} skill${total === 1 ? "" : "s"}...\n`
+    `${globalPrefix}🛠️ Installing ${total} skill${total === 1 ? "" : "s"}...\n`
   );
 
   let i = 0;
@@ -70,7 +64,7 @@ export async function installSkills(
 
   const totalDuration = formatDuration(performance.now() - totalStart);
   console.log(
-    `${globalPrefix}🎉 Done! ${total} skill${total === 1 ? "" : "s"} installed in ${c.green}${totalDuration}${c.reset}.`
+    `${globalPrefix}🔥 Done! ${total} skill${total === 1 ? "" : "s"} installed in ${c.green}${totalDuration}${c.reset}.`
   );
 }
 
