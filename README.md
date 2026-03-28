@@ -2,9 +2,14 @@
 
 Manage project Agent [skills](https://skills.sh/) from `skills.json`. Uses [`skills`](https://github.com/vercel-labs/skills) CLI under the hood.
 
-The `sf` shorthand is also available:
+The `sf` shorthand is available after installing the package:
 
 ```bash
+npm install -g skill-forger  # global install
+sf add vercel-labs/skills
+
+# or with a local install
+npm install -D skill-forger
 npx sf add vercel-labs/skills
 ```
 
