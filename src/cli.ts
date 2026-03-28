@@ -152,6 +152,7 @@ ${c.bold}Arguments:${c.reset}
 
 ${c.bold}Options:${c.reset}
   ${c.cyan}--agent${c.reset} <name>    Target agent ${c.dim}(default: claude-code, can be repeated)${c.reset}
+  ${c.cyan}-g, --global${c.reset}      Install skills globally
   ${c.cyan}-h, --help${c.reset}        Show this help message
 
 ${c.bold}Examples:${c.reset}

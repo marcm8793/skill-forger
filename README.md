@@ -83,6 +83,7 @@ npx skill-forger add <source>... [options]
 | Option           | Description                                       |
 | ---------------- | ------------------------------------------------- |
 | `--agent <name>` | Target agent (default: `claude-code`, repeatable) |
+| `-g, --global`   | Install skills globally                           |
 | `-h, --help`     | Show help                                         |
 
 ### Source Formats
