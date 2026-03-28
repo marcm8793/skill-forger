@@ -12,6 +12,51 @@ export interface InstallSkillsOptions {
   yes?: boolean;
 }
 
+// Agents that use the shared .agents/skills directory
+const SHARED_DIR_AGENTS = new Set([
+  "amp",
+  "antigravity",
+  "cline",
+  "codex",
+  "cursor",
+  "deepagents",
+  "gemini-cli",
+  "github-copilot",
+  "kimi-cli",
+  "opencode",
+  "replit",
+  "universal",
+  "warp",
+]);
+
+// Agents whose directory name differs from the agent name
+const AGENT_SKILLS_DIR: Record<string, string> = {
+  "claude-code": ".claude/skills",
+  "command-code": ".commandcode/skills",
+  droid: ".factory/skills",
+  "iflow-cli": ".iflow/skills",
+  kilo: ".kilocode/skills",
+  "kiro-cli": ".kiro/skills",
+  "mistral-vibe": ".vibe/skills",
+  openclaw: "skills",
+  "qwen-code": ".qwen/skills",
+  "trae-cn": ".trae/skills",
+};
+
+export function getSkillsDir(agent: string): string {
+  if (agent in AGENT_SKILLS_DIR) {
+    return AGENT_SKILLS_DIR[agent] as string;
+  }
+  if (SHARED_DIR_AGENTS.has(agent)) {
+    return ".agents/skills";
+  }
+  return `.${agent}/skills`;
+}
+
+export function getSkillsDirs(agents: string[]): string[] {
+  return [...new Set(agents.map(getSkillsDir))];
+}
+
 let _skillsBinaryCache: string | undefined | null = null;
 
 export function findSkillsBinary(options?: {

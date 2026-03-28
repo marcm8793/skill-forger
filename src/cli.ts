@@ -3,8 +3,9 @@
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
 import { addSkill, findSkillsConfig } from "./config.ts";
-import { installSkillSource, installSkills } from "./skills.ts";
+import { getSkillsDirs, installSkillSource, installSkills } from "./skills.ts";
 import { c } from "./utils/colors.ts";
+import { addGitignoreEntries } from "./utils/gitignore.ts";
 
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
@@ -42,10 +43,27 @@ export function parseSource(input: string): {
   return { source, skills: skills.includes("*") ? [] : skills };
 }
 
-async function handleInstall(values: {
+interface CommandValues {
   agent?: string[];
+  gitignore?: boolean;
   global?: boolean;
-}): Promise<void> {
+}
+
+async function updateGitignore(values: CommandValues): Promise<void> {
+  if (!values.gitignore || values.global) {
+    return;
+  }
+  const agents = values.agent || ["claude-code"];
+  const dirs = getSkillsDirs(agents);
+  const result = await addGitignoreEntries(dirs);
+  if (result) {
+    console.log(
+      `${c.green}✔${c.reset} Added ${c.cyan}${dirs.join(", ")}${c.reset} to .gitignore`
+    );
+  }
+}
+
+async function handleInstall(values: CommandValues): Promise<void> {
   const skillsConfigPath = findSkillsConfig();
   if (!skillsConfigPath) {
     console.log(`${c.yellow}No skills.json found.${c.reset}
@@ -61,11 +79,12 @@ ${c.dim}$${c.reset} npx ${name} add ${c.cyan}vercel-labs/skills${c.reset}
     agents: values.agent || ["claude-code"],
     global: values.global,
   });
+  await updateGitignore(values);
 }
 
 async function handleAdd(
   positionals: string[],
-  values: { agent?: string[]; global?: boolean }
+  values: CommandValues
 ): Promise<void> {
   const sources = positionals.slice(1);
   if (sources.length === 0) {
@@ -101,16 +120,24 @@ async function handleAdd(
       `${globalPrefix}${c.green}✔${c.reset} Added ${c.cyan}${source}${c.reset} to skills.json`
     );
   }
+
+  await updateGitignore(values);
 }
 
 export async function main(
   argv: string[] = process.argv.slice(2)
 ): Promise<void> {
+  // Expand --gi alias to --gitignore before parsing
+  const normalizedArgv = argv.map((arg) =>
+    arg === "--gi" ? "--gitignore" : arg
+  );
+
   const { values, positionals } = parseArgs({
-    args: argv,
+    args: normalizedArgv,
     allowPositionals: true,
     options: {
       agent: { type: "string", multiple: true },
+      gitignore: { type: "boolean" },
       global: { type: "boolean", short: "g" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
@@ -153,6 +180,7 @@ ${c.bold}Arguments:${c.reset}
 ${c.bold}Options:${c.reset}
   ${c.cyan}--agent${c.reset} <name>    Target agent ${c.dim}(default: claude-code, can be repeated)${c.reset}
   ${c.cyan}-g, --global${c.reset}      Install skills globally
+  ${c.cyan}--gitignore, --gi${c.reset} Add skill directories to .gitignore
   ${c.cyan}-h, --help${c.reset}        Show this help message
 
 ${c.bold}Examples:${c.reset}
@@ -171,6 +199,7 @@ ${c.bold}Usage:${c.reset} ${c.cyan}${name} install${c.reset} [options]
 ${c.bold}Options:${c.reset}
   ${c.cyan}--agent${c.reset} <name>    Target agent ${c.dim}(default: claude-code, can be repeated)${c.reset}
   ${c.cyan}-g, --global${c.reset}      Install skills globally
+  ${c.cyan}--gitignore, --gi${c.reset} Add skill directories to .gitignore
   ${c.cyan}-h, --help${c.reset}        Show this help message
 
 ${c.bold}Examples:${c.reset}

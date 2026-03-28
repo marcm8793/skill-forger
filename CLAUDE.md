@@ -12,7 +12,8 @@ src/
 ├── config.ts           # skills.json config management
 ├── skills.ts           # Skills CLI execution
 └── utils/
-    └── colors.ts       # ANSI color codes for terminal output
+    ├── colors.ts       # ANSI color codes for terminal output
+    └── gitignore.ts    # .gitignore file management
 test/index.test.ts      # Tests using vitest
 ```
 
@@ -29,6 +30,8 @@ test/index.test.ts      # Tests using vitest
 - `findSkillsBinary(options?)` — Finds local `skills` binary in node_modules/.bin (options: `{ cache? }`, cached by default)
 - `installSkills(options?)` — Spawns `skills add` for each source with progress logging; options: `{ cwd?, agents?, global?, yes? }`
 - `installSkillSource(entry, options)` — Installs a single skill source; options: `{ cwd?, agents?, global?, yes?, prefix? }`
+- `getSkillsDir(agent)` — Returns the local skills directory path for an agent (e.g., `claude-code` → `.claude/skills`)
+- `getSkillsDirs(agents)` — Returns deduplicated skills directories for multiple agents
 
 ### CLI Entry (src/cli.ts)
 
@@ -44,6 +47,13 @@ test/index.test.ts      # Tests using vitest
 - `c.reset`, `c.bold`, `c.dim` — formatting
 - `c.red`, `c.green`, `c.yellow`, `c.blue`, `c.magenta`, `c.cyan` — colors
 - Auto-disabled when stdout is not a TTY
+
+**gitignore.ts** — `.gitignore` file management:
+
+- `findGitignore(cwd?)` — Finds `.gitignore` by traversing up from cwd
+- `addGitignoreEntries(entries, options?)` — Adds entries to `.gitignore` (options: `{ cwd?, createIfNotExists? }`)
+  - Idempotent: skips entries already present
+  - Creates `.gitignore` if not found (unless `createIfNotExists: false`)
 
 ### `skills.json` Schema
 
@@ -63,8 +73,8 @@ interface SkillSource {
 
 ```sh
 skill-forger                                    # Install skills (default)
-skill-forger install, i [--global] [--agent <name>...]  # Install skills from skills.json
-skill-forger add <source>... [--agent <name>...]  # Add skill source(s) to skills.json
+skill-forger install, i [--global] [--gitignore] [--agent <name>...]  # Install skills from skills.json
+skill-forger add <source>... [--gitignore] [--agent <name>...]  # Add skill source(s) to skills.json
 ```
 
 ### Source Format
@@ -83,6 +93,7 @@ skill-forger add skills.sh/owner/repo/pdf             # skills.sh URL (no protoc
 
 - `--agent <name>` — Target agent (default: `claude-code`, repeatable)
 - `-g, --global` — Install skills globally (for `install` command)
+- `--gitignore, --gi` — Add skill directories to `.gitignore` (ignored with `--global`)
 - `-h, --help` — Show help
 - `-v, --version` — Show version
 

@@ -66,11 +66,12 @@ Installs all skills defined in `skills.json`.
 npx skill-forger install [options]
 ```
 
-| Option           | Description                                       |
-| ---------------- | ------------------------------------------------- |
-| `--agent <name>` | Target agent (default: `claude-code`, repeatable) |
-| `-g, --global`   | Install skills globally                           |
-| `-h, --help`     | Show help                                         |
+| Option             | Description                                       |
+| ------------------ | ------------------------------------------------- |
+| `--agent <name>`   | Target agent (default: `claude-code`, repeatable) |
+| `-g, --global`     | Install skills globally                           |
+| `--gitignore, --gi`| Add skill directories to `.gitignore`             |
+| `-h, --help`       | Show help                                         |
 
 #### `add`
 
@@ -80,11 +81,12 @@ Adds skill source(s) to `skills.json` and installs them.
 npx skill-forger add <source>... [options]
 ```
 
-| Option           | Description                                       |
-| ---------------- | ------------------------------------------------- |
-| `--agent <name>` | Target agent (default: `claude-code`, repeatable) |
-| `-g, --global`   | Install skills globally                           |
-| `-h, --help`     | Show help                                         |
+| Option             | Description                                       |
+| ------------------ | ------------------------------------------------- |
+| `--agent <name>`   | Target agent (default: `claude-code`, repeatable) |
+| `-g, --global`     | Install skills globally                           |
+| `--gitignore, --gi`| Add skill directories to `.gitignore`             |
+| `-h, --help`       | Show help                                         |
 
 ### Source Formats
 
@@ -123,6 +125,9 @@ npx skill-forger add https://skills.sh/vercel-labs/skills/find-skills
 
 # Install skills globally
 npx skill-forger install --global
+
+# Add skills and update .gitignore
+npx skill-forger add vercel-labs/skills --gitignore
 
 # Install for multiple agents
 npx skill-forger install --agent claude-code --agent cursor
