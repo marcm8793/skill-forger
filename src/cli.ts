@@ -3,7 +3,7 @@
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
 import { addSkill, findSkillsConfig } from "./config.ts";
-import { getSkillsDirs, installSkillSource, installSkills } from "./skills.ts";
+import { findSkillsDirs, installSkillSource, installSkills } from "./skills.ts";
 import { c } from "./utils/colors.ts";
 import { addGitignoreEntries } from "./utils/gitignore.ts";
 
@@ -53,8 +53,10 @@ async function updateGitignore(values: CommandValues): Promise<void> {
   if (!values.gitignore || values.global) {
     return;
   }
-  const agents = values.agent || ["claude-code"];
-  const dirs = getSkillsDirs(agents);
+  const dirs = findSkillsDirs();
+  if (dirs.length === 0) {
+    return;
+  }
   const result = await addGitignoreEntries(dirs);
   if (result) {
     console.log(

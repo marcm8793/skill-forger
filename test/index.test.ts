@@ -3,11 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseSource } from "../src/cli.ts";
 import { findSkillsConfig, readSkillsConfig } from "../src/config.ts";
-import {
-  findSkillsBinary,
-  getSkillsDir,
-  getSkillsDirs,
-} from "../src/skills.ts";
+import { findSkillsBinary, findSkillsDirs } from "../src/skills.ts";
 import { addGitignoreEntries, findGitignore } from "../src/utils/gitignore.ts";
 
 const SKILLS_BIN_RE = /node_modules[/\\]\.bin[/\\]skills$/;
@@ -158,42 +154,31 @@ describe("parseSource", () => {
   });
 });
 
-describe("getSkillsDir", () => {
-  it("maps claude-code to .claude/skills", () => {
-    expect(getSkillsDir("claude-code")).toBe(".claude/skills");
+describe("findSkillsDirs", () => {
+  const testDir = join(import.meta.dirname, ".tmp");
+
+  it("finds directories containing a skills subdirectory", async () => {
+    const dir = join(testDir, "skills-dirs");
+    await mkdir(join(dir, ".claude", "skills"), { recursive: true });
+    await mkdir(join(dir, ".agents", "skills"), { recursive: true });
+    await mkdir(join(dir, "no-skills-here"), { recursive: true });
+
+    const result = findSkillsDirs(dir);
+    expect(result).toContain(".claude/skills");
+    expect(result).toContain(".agents/skills");
+    expect(result).not.toContain("no-skills-here");
+
+    await rm(testDir, { recursive: true, force: true });
   });
 
-  it("maps shared-directory agents to .agents/skills", () => {
-    expect(getSkillsDir("cursor")).toBe(".agents/skills");
-    expect(getSkillsDir("codex")).toBe(".agents/skills");
-    expect(getSkillsDir("github-copilot")).toBe(".agents/skills");
-    expect(getSkillsDir("gemini-cli")).toBe(".agents/skills");
-  });
+  it("returns empty array when no skill directories exist", async () => {
+    const dir = join(testDir, "no-skills");
+    await mkdir(dir, { recursive: true });
 
-  it("maps agents with non-standard directory names", () => {
-    expect(getSkillsDir("kilo")).toBe(".kilocode/skills");
-    expect(getSkillsDir("droid")).toBe(".factory/skills");
-    expect(getSkillsDir("openclaw")).toBe("skills");
-    expect(getSkillsDir("mistral-vibe")).toBe(".vibe/skills");
-  });
+    const result = findSkillsDirs(dir);
+    expect(result).toEqual([]);
 
-  it("falls back to .<agent>/skills for unknown agents", () => {
-    expect(getSkillsDir("windsurf")).toBe(".windsurf/skills");
-    expect(getSkillsDir("roo")).toBe(".roo/skills");
-    expect(getSkillsDir("unknown-agent")).toBe(".unknown-agent/skills");
-  });
-});
-
-describe("getSkillsDirs", () => {
-  it("deduplicates directories", () => {
-    expect(getSkillsDirs(["cursor", "codex"])).toEqual([".agents/skills"]);
-  });
-
-  it("returns unique directories for mixed agents", () => {
-    const dirs = getSkillsDirs(["claude-code", "cursor"]);
-    expect(dirs).toContain(".claude/skills");
-    expect(dirs).toContain(".agents/skills");
-    expect(dirs).toHaveLength(2);
+    await rm(testDir, { recursive: true, force: true });
   });
 });
 

@@ -30,8 +30,7 @@ test/index.test.ts      # Tests using vitest
 - `findSkillsBinary(options?)` — Finds local `skills` binary in node_modules/.bin (options: `{ cache? }`, cached by default)
 - `installSkills(options?)` — Spawns `skills add` for each source with progress logging; options: `{ cwd?, agents?, global?, yes? }`
 - `installSkillSource(entry, options)` — Installs a single skill source; options: `{ cwd?, agents?, global?, yes?, prefix? }`
-- `getSkillsDir(agent)` — Returns the local skills directory path for an agent (e.g., `claude-code` → `.claude/skills`)
-- `getSkillsDirs(agents)` — Returns deduplicated skills directories for multiple agents
+- `findSkillsDirs(cwd?)` — Scans cwd for directories containing a `skills` subdirectory (e.g., `.claude/skills`, `.agents/skills`)
 
 ### CLI Entry (src/cli.ts)
 
