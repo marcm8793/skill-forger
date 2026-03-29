@@ -146,6 +146,68 @@ export async function installSkillSource(
   );
 }
 
+export interface UninstallSkillSourceOptions {
+  agents?: string[];
+  cwd?: string;
+  global?: boolean;
+  prefix?: string;
+  yes?: boolean;
+}
+
+export async function uninstallSkillSource(
+  entry: { source: string; skills?: string[] },
+  options: UninstallSkillSourceOptions
+): Promise<void> {
+  const skillsBinary = findSkillsBinary();
+  const globalPrefix = options.global
+    ? `${c.magenta}[ global ]${c.reset} `
+    : "";
+
+  const skillNames = entry.skills?.length ? entry.skills : [];
+  const skillList =
+    skillNames.length > 0 ? skillNames.join(", ") : "all skills";
+
+  console.log(
+    `${globalPrefix}${c.cyan}◐${c.reset} ${options.prefix || ""}Removing ${c.cyan}${entry.source}${c.reset} ${c.dim}(${skillList})${c.reset}`
+  );
+
+  if (skillNames.length === 0) {
+    console.log(
+      `${c.yellow}⚠${c.reset} Skill files may remain on disk. Run ${c.dim}skills remove${c.reset} to clean up.\n`
+    );
+    return;
+  }
+
+  const [command, args] = skillsBinary
+    ? [skillsBinary, ["remove", ...skillNames]]
+    : ["npx", ["skills", "remove", ...skillNames]];
+
+  if (options.agents && options.agents.length > 0) {
+    args.push("--agent", ...options.agents);
+  }
+
+  if (options.global) {
+    args.push("--global");
+  }
+
+  if (options.yes) {
+    args.push("--yes");
+  }
+
+  if (process.env.DEBUG) {
+    console.log(
+      `${c.dim}$ ${[command.replace(process.cwd(), "."), ...args].join(" ")}${c.reset}\n`
+    );
+  }
+
+  const start = performance.now();
+  await runCommand(command, args);
+  const duration = formatDuration(performance.now() - start);
+  console.log(
+    `${globalPrefix}${c.green}✔${c.reset} Removed ${entry.source} ${c.dim}(${duration})${c.reset}\n`
+  );
+}
+
 // --- Internal helpers ---
 
 function formatDuration(ms: number): string {

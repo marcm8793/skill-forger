@@ -101,6 +101,10 @@ export interface AddSkillOptions {
   cwd?: string;
 }
 
+export interface RemoveSkillOptions {
+  cwd?: string;
+}
+
 export function addSkill(
   source: string,
   skills: string[] = [],
@@ -129,6 +133,52 @@ export function addSkill(
 
     return config;
   }, options);
+}
+
+export function removeSkill(
+  source: string,
+  skills: string[] = [],
+  options: RemoveSkillOptions = {}
+): Promise<SkillsConfigResult> {
+  return updateSkillsConfig(
+    (config) => {
+      const entryIndex = config.skills.findIndex(
+        (item) => item.source === source
+      );
+      if (entryIndex === -1) {
+        throw new Error(`Source "${source}" not found in skills.json.`);
+      }
+
+      const entry = config.skills[entryIndex];
+      if (!entry) {
+        throw new Error(`Source "${source}" not found in skills.json.`);
+      }
+
+      // No specific skills = remove entire source
+      if (skills.length === 0) {
+        config.skills.splice(entryIndex, 1);
+        return config;
+      }
+
+      // Source installs all skills — can't selectively remove
+      if (!entry.skills?.length) {
+        throw new Error(
+          `Source "${source}" installs all skills. Remove the entire source: sf uninstall ${source}`
+        );
+      }
+
+      // Remove specific skills
+      entry.skills = entry.skills.filter((s) => !skills.includes(s));
+
+      // If no skills remain, remove the entire entry
+      if (entry.skills.length === 0) {
+        config.skills.splice(entryIndex, 1);
+      }
+
+      return config;
+    },
+    { cwd: options.cwd, createIfNotExists: false }
+  );
 }
 
 function assertSkillsConfig(value: unknown): SkillsConfig {

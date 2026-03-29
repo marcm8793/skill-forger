@@ -23,6 +23,7 @@ test/index.test.ts      # Tests using vitest
 - `readSkillsConfig(options?)` — Reads and validates `skills.json` (options: `{ cwd?, createIfNotExists? }`)
 - `updateSkillsConfig(updater, options?)` — Generic update with callback (options: `{ cwd?, createIfNotExists? }`, defaults `createIfNotExists: true`)
 - `addSkill(source, skills?, options?)` — Adds a skill source (options: `{ cwd?, createIfNotExists? }`, defaults `createIfNotExists: true`)
+- `removeSkill(source, skills?, options?)` — Removes a skill source or specific skills (options: `{ cwd? }`)
 - Auto-injects `$schema` field during validation if missing
 
 ### Skills CLI (src/skills.ts)
@@ -30,6 +31,7 @@ test/index.test.ts      # Tests using vitest
 - `findSkillsBinary(options?)` — Finds local `skills` binary in node_modules/.bin (options: `{ cache? }`, cached by default)
 - `installSkills(options?)` — Spawns `skills add` for each source with progress logging; options: `{ cwd?, agents?, global?, yes? }`
 - `installSkillSource(entry, options)` — Installs a single skill source; options: `{ cwd?, agents?, global?, yes?, prefix? }`
+- `uninstallSkillSource(entry, options)` — Removes a single skill source from disk via `skills remove`; options: `{ cwd?, agents?, global?, yes?, prefix? }`
 - `findSkillsDirs(cwd?)` — Scans cwd for directories containing a `skills` subdirectory (e.g., `.claude/skills`, `.agents/skills`)
 
 ### CLI Entry (src/cli.ts)
@@ -74,6 +76,7 @@ interface SkillSource {
 skill-forger                                    # Install skills (default)
 skill-forger install, i [--global] [--gitignore] [--agent <name>...]  # Install skills from skills.json
 skill-forger add <source>... [--gitignore] [--agent <name>...]  # Add skill source(s) to skills.json
+skill-forger uninstall, rm <source>... [--global] [--agent <name>...]  # Remove skill source(s) from skills.json
 ```
 
 ### Source Format

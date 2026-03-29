@@ -2,8 +2,18 @@
 
 import { createRequire } from "node:module";
 import { parseArgs } from "node:util";
-import { addSkill, findSkillsConfig } from "./config.ts";
-import { findSkillsDirs, installSkillSource, installSkills } from "./skills.ts";
+import {
+  addSkill,
+  findSkillsConfig,
+  readSkillsConfig,
+  removeSkill,
+} from "./config.ts";
+import {
+  findSkillsDirs,
+  installSkillSource,
+  installSkills,
+  uninstallSkillSource,
+} from "./skills.ts";
 import { c } from "./utils/colors.ts";
 import { addGitignoreEntries } from "./utils/gitignore.ts";
 
@@ -126,6 +136,56 @@ async function handleAdd(
   await updateGitignore(values);
 }
 
+async function handleUninstall(
+  positionals: string[],
+  values: CommandValues
+): Promise<void> {
+  const sources = positionals.slice(1);
+  if (sources.length === 0) {
+    showUsage("uninstall");
+    throw new Error("Missing skill source.");
+  }
+
+  const parsedSources: { source: string; skills: string[] }[] = [];
+  for (const rawSource of sources) {
+    const { source, skills } = parseSource(rawSource);
+    const existing = parsedSources.find((p) => p.source === source);
+    if (existing) {
+      if (skills.length === 0 || existing.skills.length === 0) {
+        existing.skills = [];
+      } else {
+        existing.skills = [...new Set([...existing.skills, ...skills])];
+      }
+    } else {
+      parsedSources.push({ source, skills: [...skills] });
+    }
+  }
+
+  const agents = values.agent || ["claude-code"];
+  const globalPrefix = values.global ? `${c.magenta}[ global ]${c.reset} ` : "";
+
+  for (const { source, skills } of parsedSources) {
+    // Determine which skills to remove from disk
+    let diskSkills = skills;
+    if (skills.length === 0) {
+      const { config } = await readSkillsConfig();
+      const entry = config.skills.find((s) => s.source === source);
+      if (entry?.skills?.length) {
+        diskSkills = entry.skills;
+      }
+    }
+
+    await uninstallSkillSource(
+      { source, skills: diskSkills },
+      { agents, yes: true, global: values.global }
+    );
+    await removeSkill(source, skills);
+    console.log(
+      `${globalPrefix}${c.green}✔${c.reset} Removed ${c.cyan}${source}${c.reset} from skills.json`
+    );
+  }
+}
+
 export async function main(
   argv: string[] = process.argv.slice(2)
 ): Promise<void> {
@@ -168,6 +228,16 @@ export async function main(
     return;
   }
 
+  if (
+    command === "uninstall" ||
+    command === "remove" ||
+    command === "rm" ||
+    command === "un"
+  ) {
+    await handleUninstall(positionals, values);
+    return;
+  }
+
   throw new Error(`Unknown command: ${command}`);
 }
 
@@ -190,6 +260,31 @@ ${c.bold}Examples:${c.reset}
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills:pdf,commit
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills:find-skills anthropics/skills:skill-creator
   ${c.dim}$${c.reset} ${name} add https://skills.sh/vercel-labs/skills/pdf
+`);
+    return;
+  }
+
+  if (
+    command === "uninstall" ||
+    command === "remove" ||
+    command === "rm" ||
+    command === "un"
+  ) {
+    console.log(`
+${c.bold}Usage:${c.reset} ${c.cyan}${name} uninstall${c.reset} <source>... [options]
+
+${c.bold}Arguments:${c.reset}
+  ${c.cyan}<source>${c.reset}          Skill source ${c.dim}(e.g., vercel-labs/skills:pdf,commit)${c.reset}
+
+${c.bold}Options:${c.reset}
+  ${c.cyan}--agent${c.reset} <name>    Target agent ${c.dim}(default: claude-code, can be repeated)${c.reset}
+  ${c.cyan}-g, --global${c.reset}      Remove skills globally
+  ${c.cyan}-h, --help${c.reset}        Show this help message
+
+${c.bold}Examples:${c.reset}
+  ${c.dim}$${c.reset} ${name} uninstall vercel-labs/skills
+  ${c.dim}$${c.reset} ${name} uninstall vercel-labs/skills:pdf,commit
+  ${c.dim}$${c.reset} ${name} uninstall org/repo-a:skill1 org/repo-b
 `);
     return;
   }
@@ -222,6 +317,7 @@ ${c.bold}Usage:${c.reset} ${c.cyan}${name}${c.reset} <command> [options]
 ${c.bold}Commands:${c.reset}
   ${c.cyan}install, i${c.reset}        Install skills from skills.json ${c.dim}(default)${c.reset}
   ${c.cyan}add${c.reset}               Add a skill source to skills.json
+  ${c.cyan}uninstall, rm${c.reset}     Remove a skill source from skills.json
 
 ${c.bold}Options:${c.reset}
   ${c.cyan}-h, --help${c.reset}        Show help for a command
@@ -232,6 +328,7 @@ ${c.bold}Examples:${c.reset}
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills       ${c.dim}# Add a skill source${c.reset}
   ${c.dim}$${c.reset} ${name} add owner/repo:pdf,commit    ${c.dim}# Add specific skills${c.reset}
   ${c.dim}$${c.reset} ${name} add org/a:skill1 org/b:skill2 ${c.dim}# Add multiple sources${c.reset}
+  ${c.dim}$${c.reset} ${name} uninstall vercel-labs/skills  ${c.dim}# Remove a skill source${c.reset}
 
 Run ${c.cyan}${name} <command> --help${c.reset} for command-specific help.
 `);

@@ -37,6 +37,12 @@ npx skill-forger add anthropics/skills:skill-creator
   <img src="./assets/add.svg" alt="Install preview">
 </p>
 
+**Remove skills from project:**
+
+```bash
+npx skill-forger uninstall vercel-labs/skills:find-skills
+```
+
 This creates a `skills.json` file that you commit to your repo — so your whole team shares the same skills:
 
 ```sh
@@ -56,9 +62,10 @@ git add skills.json
 ## CLI Usage
 
 ```sh
-npx skill-forger                    # Install skills from skills.json (default)
-npx skill-forger install, i         # Same as above
-npx skill-forger add <source>...    # Add skill source(s) to skills.json
+npx skill-forger                          # Install skills from skills.json (default)
+npx skill-forger install, i               # Same as above
+npx skill-forger add <source>...          # Add skill source(s) to skills.json
+npx skill-forger uninstall, rm <source>... # Remove skill source(s) from skills.json
 ```
 
 ### Commands
@@ -92,6 +99,33 @@ npx skill-forger add <source>... [options]
 | `-g, --global`     | Install skills globally                           |
 | `--gitignore, --gi`| Add skill directories to `.gitignore`             |
 | `-h, --help`       | Show help                                         |
+
+#### `uninstall`
+
+Removes skill source(s) from `skills.json` and deletes them from disk.
+
+Aliases: `remove`, `rm`, `un`
+
+```sh
+npx skill-forger uninstall <source>... [options]
+```
+
+| Option             | Description                                       |
+| ------------------ | ------------------------------------------------- |
+| `--agent <name>`   | Target agent (default: `claude-code`, repeatable) |
+| `-g, --global`     | Remove skills globally                            |
+| `-h, --help`       | Show help                                         |
+
+```sh
+# Remove an entire source
+npx skill-forger uninstall vercel-labs/skills
+
+# Remove specific skills from a source
+npx skill-forger uninstall vercel-labs/skills:pdf,commit
+
+# Remove multiple sources at once
+npx skill-forger uninstall org/repo-a:skill1 org/repo-b
+```
 
 ### Source Formats
 
@@ -136,6 +170,12 @@ npx skill-forger add vercel-labs/skills --gitignore
 
 # Install for multiple agents
 npx skill-forger install --agent claude-code --agent cursor
+
+# Remove a skill source
+npx skill-forger uninstall vercel-labs/skills
+
+# Remove specific skills
+npx skill-forger uninstall vercel-labs/skills:pdf,commit
 ```
 
 ### Supported Agents
