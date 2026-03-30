@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.1.10
+
+[compare changes](https://github.com/marcm8793/skillforge/compare/v0.1.9...v0.1.10)
+
+### 🚀 Enhancements
+
+- **cli:** Support GitHub URLs and clean skills-lock.json on uninstall ([91ba738](https://github.com/marcm8793/skillforge/commit/91ba738))
+
+### ❤️ Contributors
+
+- Marc Mansour ([@marcm8793](https://github.com/marcm8793))
+
 ## v0.1.9
 
 [compare changes](https://github.com/marcm8793/skillforge/compare/v0.1.8...v0.1.9)
