@@ -181,6 +181,54 @@ export function removeSkill(
   );
 }
 
+export interface SkillsLock {
+  skills: Record<
+    string,
+    { computedHash: string; source: string; sourceType: string }
+  >;
+  version: number;
+}
+
+export async function removeSkillsLockEntries(
+  source: string,
+  skills: string[] = [],
+  options: RemoveSkillOptions = {}
+): Promise<void> {
+  const configPath = findSkillsConfig(options.cwd);
+  if (!configPath) {
+    return;
+  }
+
+  const lockPath = join(dirname(configPath), "skills-lock.json");
+  if (!existsSync(lockPath)) {
+    return;
+  }
+
+  const raw = await readFile(lockPath, "utf8");
+  const lock = JSON.parse(raw) as SkillsLock;
+
+  let changed = false;
+  if (skills.length > 0) {
+    for (const skill of skills) {
+      if (lock.skills[skill]?.source === source) {
+        delete lock.skills[skill];
+        changed = true;
+      }
+    }
+  } else {
+    for (const [name, entry] of Object.entries(lock.skills)) {
+      if (entry.source === source) {
+        delete lock.skills[name];
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+  }
+}
+
 function assertSkillsConfig(value: unknown): SkillsConfig {
   if (!value || typeof value !== "object" || !("skills" in value)) {
     throw new Error("Invalid skills.json: missing 'skills' key.");

@@ -76,13 +76,18 @@ export async function installSkills(
     ? `${c.magenta}[ global ]${c.reset} `
     : "";
   console.log(
-    `${globalPrefix}🛠️ Installing ${total} skill${total === 1 ? "" : "s"}...\n`
+    `${globalPrefix}🛠️ Installing ${total} skill${total === 1 ? "" : "s"}...`
   );
 
-  let i = 0;
+  let idx = 0;
   for (const entry of config.skills) {
-    i++;
-    await installSkillSource(entry, { ...options, prefix: `[${i}/${total}] ` });
+    if (idx > 0) {
+      console.log();
+    }
+    await installSkillSource(entry, {
+      ...options,
+      prefix: `[${++idx}/${total}] `,
+    });
   }
 
   const totalDuration = formatDuration(performance.now() - totalStart);
@@ -142,7 +147,7 @@ export async function installSkillSource(
   await runCommand(command, args);
   const skillDuration = formatDuration(performance.now() - skillStart);
   console.log(
-    `${globalPrefix}${c.green}✔${c.reset} Installed ${entry.source} ${c.dim}(${skillDuration})${c.reset}\n`
+    `${globalPrefix}${c.green}✔${c.reset} Installed ${entry.source} ${c.dim}(${skillDuration})${c.reset}`
   );
 }
 
@@ -173,7 +178,7 @@ export async function uninstallSkillSource(
 
   if (skillNames.length === 0) {
     console.log(
-      `${c.yellow}⚠${c.reset} Skill files may remain on disk. Run ${c.dim}skills remove${c.reset} to clean up.\n`
+      `${c.yellow}⚠${c.reset} Skill files may remain on disk. Run ${c.dim}skills remove${c.reset} to clean up.`
     );
     return;
   }
@@ -204,7 +209,7 @@ export async function uninstallSkillSource(
   await runCommand(command, args);
   const duration = formatDuration(performance.now() - start);
   console.log(
-    `${globalPrefix}${c.green}✔${c.reset} Removed ${entry.source} ${c.dim}(${duration})${c.reset}\n`
+    `${globalPrefix}${c.green}✔${c.reset} Removed ${entry.source} ${c.dim}(${duration})${c.reset}`
   );
 }
 

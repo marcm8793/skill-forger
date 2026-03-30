@@ -7,6 +7,7 @@ import {
   findSkillsConfig,
   readSkillsConfig,
   removeSkill,
+  removeSkillsLockEntries,
 } from "./config.ts";
 import {
   findSkillsDirs,
@@ -49,7 +50,7 @@ export function parseSource(input: string): {
   // Handle GitHub URLs: https://github.com/owner/repo/tree/branch/skills/skill-name
   const githubMatch = input.match(GITHUB_RE);
   if (githubMatch) {
-    const [, ownerRepo, skillPath] = githubMatch;
+    const [, ownerRepo = "", skillPath = ""] = githubMatch;
     const skills = skillPath
       .split("/")
       .map((s) => s.trim())
@@ -138,14 +139,18 @@ async function handleAdd(
   const agents = values.agent || ["claude-code"];
   const globalPrefix = values.global ? `${c.magenta}[ global ]${c.reset} ` : "";
 
-  for (const { source, skills } of parsedSources) {
+  let addIdx = 0;
+  for (const entry of parsedSources) {
+    if (addIdx++ > 0) {
+      console.log();
+    }
     await installSkillSource(
-      { source, skills },
+      { source: entry.source, skills: entry.skills },
       { agents, yes: true, global: values.global }
     );
-    await addSkill(source, skills);
+    await addSkill(entry.source, entry.skills);
     console.log(
-      `${globalPrefix}${c.green}✔${c.reset} Added ${c.cyan}${source}${c.reset} to skills.json`
+      `${globalPrefix}${c.green}✔${c.reset} Added ${c.cyan}${entry.source}${c.reset} to skills.json`
     );
   }
 
@@ -180,24 +185,29 @@ async function handleUninstall(
   const agents = values.agent || ["claude-code"];
   const globalPrefix = values.global ? `${c.magenta}[ global ]${c.reset} ` : "";
 
-  for (const { source, skills } of parsedSources) {
+  let rmIdx = 0;
+  for (const parsed of parsedSources) {
+    if (rmIdx++ > 0) {
+      console.log();
+    }
     // Determine which skills to remove from disk
-    let diskSkills = skills;
-    if (skills.length === 0) {
+    let diskSkills = parsed.skills;
+    if (parsed.skills.length === 0) {
       const { config } = await readSkillsConfig();
-      const entry = config.skills.find((s) => s.source === source);
+      const entry = config.skills.find((s) => s.source === parsed.source);
       if (entry?.skills?.length) {
         diskSkills = entry.skills;
       }
     }
 
     await uninstallSkillSource(
-      { source, skills: diskSkills },
+      { source: parsed.source, skills: diskSkills },
       { agents, yes: true, global: values.global }
     );
-    await removeSkill(source, skills);
+    await removeSkill(parsed.source, parsed.skills);
+    await removeSkillsLockEntries(parsed.source, diskSkills);
     console.log(
-      `${globalPrefix}${c.green}✔${c.reset} Removed ${c.cyan}${source}${c.reset} from skills.json`
+      `${globalPrefix}${c.green}✔${c.reset} Removed ${c.cyan}${parsed.source}${c.reset} from skills.json`
     );
   }
 }
@@ -276,6 +286,7 @@ ${c.bold}Examples:${c.reset}
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills:pdf,commit
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills:find-skills anthropics/skills:skill-creator
   ${c.dim}$${c.reset} ${name} add https://skills.sh/vercel-labs/skills/pdf
+  ${c.dim}$${c.reset} ${name} add https://github.com/owner/repo/tree/main/skills/skill-name
 `);
     return;
   }
@@ -344,6 +355,7 @@ ${c.bold}Examples:${c.reset}
   ${c.dim}$${c.reset} ${name} add vercel-labs/skills       ${c.dim}# Add a skill source${c.reset}
   ${c.dim}$${c.reset} ${name} add owner/repo:pdf,commit    ${c.dim}# Add specific skills${c.reset}
   ${c.dim}$${c.reset} ${name} add org/a:skill1 org/b:skill2 ${c.dim}# Add multiple sources${c.reset}
+  ${c.dim}$${c.reset} ${name} add https://github.com/o/r/tree/main/skills/s ${c.dim}# GitHub URL${c.reset}
   ${c.dim}$${c.reset} ${name} uninstall vercel-labs/skills  ${c.dim}# Remove a skill source${c.reset}
 
 Run ${c.cyan}${name} <command> --help${c.reset} for command-specific help.

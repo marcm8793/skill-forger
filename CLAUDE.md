@@ -14,7 +14,11 @@ src/
 └── utils/
     ├── colors.ts       # ANSI color codes for terminal output
     └── gitignore.ts    # .gitignore file management
-test/index.test.ts      # Tests using vitest
+test/
+├── cli.test.ts         # parseSource tests
+├── config.test.ts      # Config and lock file tests
+├── skills.test.ts      # Skills CLI tests
+└── gitignore.test.ts   # Gitignore tests
 ```
 
 ### Config (src/config.ts)
@@ -24,6 +28,7 @@ test/index.test.ts      # Tests using vitest
 - `updateSkillsConfig(updater, options?)` — Generic update with callback (options: `{ cwd?, createIfNotExists? }`, defaults `createIfNotExists: true`)
 - `addSkill(source, skills?, options?)` — Adds a skill source (options: `{ cwd?, createIfNotExists? }`, defaults `createIfNotExists: true`)
 - `removeSkill(source, skills?, options?)` — Removes a skill source or specific skills (options: `{ cwd? }`)
+- `removeSkillsLockEntries(source, skills?, options?)` — Removes entries from `skills-lock.json` matching the source (options: `{ cwd? }`)
 - Auto-injects `$schema` field during validation if missing
 
 ### Skills CLI (src/skills.ts)
@@ -39,6 +44,7 @@ test/index.test.ts      # Tests using vitest
 - `main(argv?)` — CLI entry point using Node.js `parseArgs`
 - `parseSource(input)` — Parses source input into `{ source, skills }`; supports:
   - Colon/comma format: `owner/repo:skill1,skill2` or `owner/repo:skill1:skill2`
+  - GitHub URLs: `https://github.com/owner/repo/tree/branch/skills/skill-name`
   - skills.sh URLs: `https://skills.sh/owner/repo/skill-name`
 
 ### Utils (src/utils/)
@@ -70,23 +76,39 @@ interface SkillSource {
 }
 ```
 
+### `skills-lock.json` Schema
+
+Managed by the underlying `skills` CLI. `skill-forger` cleans up entries on uninstall.
+
+```ts
+interface SkillsLock {
+  version: number;
+  skills: Record<string, {
+    source: string;       // e.g., "vercel-labs/skills"
+    sourceType: string;   // e.g., "github"
+    computedHash: string;
+  }>;
+}
+```
+
 ## CLI Commands
 
 ```sh
 skill-forger                                    # Install skills (default)
 skill-forger install, i [--global] [--gitignore] [--agent <name>...]  # Install skills from skills.json
 skill-forger add <source>... [--gitignore] [--agent <name>...]  # Add skill source(s) to skills.json
-skill-forger uninstall, rm <source>... [--global] [--agent <name>...]  # Remove skill source(s) from skills.json
+skill-forger uninstall, rm <source>... [--global] [--agent <name>...]  # Remove skill source(s) from skills.json and skills-lock.json
 ```
 
 ### Source Format
 
-Sources can include inline skills using colon or comma-separated syntax, or skills.sh URLs:
+Sources can include inline skills using colon or comma-separated syntax, GitHub URLs, or skills.sh URLs:
 
 ```sh
 skill-forger add vercel-labs/skills              # Add all skills from source
 skill-forger add owner/repo:pdf,commit           # Add specific skills inline
 skill-forger add org/repo-a:skill1 org/repo-b:skill2  # Multiple sources
+skill-forger add https://github.com/owner/repo/tree/main/skills/skill-name  # GitHub URL
 skill-forger add https://skills.sh/owner/repo/pdf     # skills.sh URL (https)
 skill-forger add skills.sh/owner/repo/pdf             # skills.sh URL (no protocol)
 ```
@@ -134,13 +156,11 @@ Installation shows colored progress with timing:
 
 ```
 🛠️ Installing 2 skills...
-
 ◐ [1/2] Installing vercel-labs/skills (pdf, commit)
 ✔ Installed vercel-labs/skills (2s)
 
-◐ [2/2] Installing anthropics/courses
+◐ [2/2] Installing anthropics/courses (all skills)
 ✔ Installed anthropics/courses (1s)
-
 🔥 Done! 2 skills installed in 3s.
 ```
 

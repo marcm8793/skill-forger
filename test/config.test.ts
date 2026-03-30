@@ -1,10 +1,11 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   findSkillsConfig,
   readSkillsConfig,
   removeSkill,
+  removeSkillsLockEntries,
 } from "../src/config.ts";
 
 describe("findSkillsConfig", () => {
@@ -166,6 +167,75 @@ describe("removeSkill", () => {
     const { config } = await removeSkill("org/repo-a", [], { cwd: dir });
     expect(config.skills).toHaveLength(1);
     expect(config.skills[0]?.source).toBe("org/repo-b");
+
+    await rm(testDir, { recursive: true, force: true });
+  });
+});
+
+describe("removeSkillsLockEntries", () => {
+  const testDir = join(import.meta.dirname, ".tmp-lock");
+
+  const makeLock = (skills: Record<string, { source: string }>) =>
+    JSON.stringify({
+      version: 1,
+      skills: Object.fromEntries(
+        Object.entries(skills).map(([k, v]) => [
+          k,
+          { ...v, sourceType: "github", computedHash: "abc" },
+        ])
+      ),
+    });
+
+  it("removes all entries for a source", async () => {
+    const dir = join(testDir, "remove-all");
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "skills.json"), JSON.stringify({ skills: [] }));
+    await writeFile(
+      join(dir, "skills-lock.json"),
+      makeLock({
+        pdf: { source: "owner/repo" },
+        commit: { source: "owner/repo" },
+        other: { source: "other/repo" },
+      })
+    );
+
+    await removeSkillsLockEntries("owner/repo", [], { cwd: dir });
+    const lock = JSON.parse(
+      await readFile(join(dir, "skills-lock.json"), "utf8")
+    );
+    expect(Object.keys(lock.skills)).toEqual(["other"]);
+
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  it("removes specific skills from lock", async () => {
+    const dir = join(testDir, "remove-specific");
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "skills.json"), JSON.stringify({ skills: [] }));
+    await writeFile(
+      join(dir, "skills-lock.json"),
+      makeLock({
+        pdf: { source: "owner/repo" },
+        commit: { source: "owner/repo" },
+      })
+    );
+
+    await removeSkillsLockEntries("owner/repo", ["pdf"], { cwd: dir });
+    const lock = JSON.parse(
+      await readFile(join(dir, "skills-lock.json"), "utf8")
+    );
+    expect(Object.keys(lock.skills)).toEqual(["commit"]);
+
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  it("does nothing when no lock file exists", async () => {
+    const dir = join(testDir, "no-lock");
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, "skills.json"), JSON.stringify({ skills: [] }));
+
+    await removeSkillsLockEntries("owner/repo", [], { cwd: dir });
+    // no error thrown
 
     await rm(testDir, { recursive: true, force: true });
   });

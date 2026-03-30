@@ -31,6 +31,8 @@ npx skill-forger
 npx skill-forger add skills.sh/vercel-labs/skills/find-skills
 
 npx skill-forger add anthropics/skills:skill-creator
+
+npx skill-forger add https://github.com/getsentry/sentry-for-ai/tree/main/skills/sentry-fix-issues
 ```
 
 <p align="center">
@@ -102,7 +104,7 @@ npx skill-forger add <source>... [options]
 
 #### `uninstall`
 
-Removes skill source(s) from `skills.json` and deletes them from disk.
+Removes skill source(s) from `skills.json`, `skills-lock.json`, and deletes them from disk.
 
 Aliases: `remove`, `rm`, `un`
 
@@ -135,10 +137,12 @@ Sources can be specified in multiple formats:
 # GitHub owner/repo format
 npx skill-forger add vercel-labs/skills
 
+# GitHub URL (extracts owner/repo and skill name automatically)
+npx skill-forger add https://github.com/getsentry/sentry-for-ai/tree/main/skills/sentry-fix-issues
+
 # skills.sh URL
 npx skill-forger add https://skills.sh/vercel-labs/skills/find-skills
 npx skill-forger add skills.sh/vercel-labs/skills/find-skills
-
 
 # Multiple sources
 npx skill-forger add org/repo-a:skill1 org/repo-b:skill2
@@ -161,6 +165,9 @@ npx skill-forger add vercel-labs/agent-skills:vercel-deploy,vercel-react-native-
 
 # Add from skills.sh URL
 npx skill-forger add https://skills.sh/vercel-labs/skills/find-skills
+
+# Add from GitHub URL
+npx skill-forger add https://github.com/getsentry/sentry-for-ai/tree/main/skills/sentry-fix-issues
 
 # Install skills globally
 npx skill-forger install --global
