@@ -65,6 +65,29 @@ describe("parseSource", () => {
     });
   });
 
+  it("parses GitHub URLs", () => {
+    expect(
+      parseSource(
+        "https://github.com/getsentry/sentry-for-ai/tree/main/skills/sentry-fix-issues"
+      )
+    ).toEqual({
+      source: "getsentry/sentry-for-ai",
+      skills: ["sentry-fix-issues"],
+    });
+    expect(
+      parseSource("https://github.com/owner/repo/tree/main/skills/skill1")
+    ).toEqual({
+      source: "owner/repo",
+      skills: ["skill1"],
+    });
+    expect(
+      parseSource("https://github.com/owner/repo/tree/develop/skills/a/b")
+    ).toEqual({
+      source: "owner/repo",
+      skills: ["a", "b"],
+    });
+  });
+
   it("returns raw input for invalid skills.sh URLs", () => {
     // Only namespace, no repo - returns as source with empty skills
     expect(parseSource("https://skills.sh/owner")).toEqual({

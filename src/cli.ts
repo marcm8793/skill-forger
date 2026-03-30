@@ -22,6 +22,8 @@ const { version } = require("../package.json") as { version: string };
 const name = "skill-forger";
 
 const SKILLS_SH_RE = /^(?:https?:\/\/)?skills\.sh\/(.+)/;
+const GITHUB_RE =
+  /^https?:\/\/github\.com\/([^/]+\/[^/]+)\/tree\/[^/]+\/skills\/(.+)/;
 
 export function parseSource(input: string): {
   source: string;
@@ -41,6 +43,20 @@ export function parseSource(input: string): {
     return {
       source: `${namespace}/${repo}`,
       skills: filtered.includes("*") ? [] : filtered,
+    };
+  }
+
+  // Handle GitHub URLs: https://github.com/owner/repo/tree/branch/skills/skill-name
+  const githubMatch = input.match(GITHUB_RE);
+  if (githubMatch) {
+    const [, ownerRepo, skillPath] = githubMatch;
+    const skills = skillPath
+      .split("/")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return {
+      source: ownerRepo,
+      skills: skills.includes("*") ? [] : skills,
     };
   }
 
